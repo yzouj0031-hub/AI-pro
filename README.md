@@ -4,6 +4,8 @@
 
 **在线地址：<https://yzouj0031-hub.github.io/AI-pro/>**（不填 key 先看流程：<https://yzouj0031-hub.github.io/AI-pro/?demo=1>）
 
+**安卓 APK：<https://github.com/yzouj0031-hub/AI-pro/releases/download/android-latest/ai-wolf-pro.apk>**
+
 纯静态页面，没有后端、没有构建步骤，API key 只存在你自己的浏览器里。
 
 ## 为什么重做
@@ -36,6 +38,17 @@
 6. 「导出记录」把整局（含每个 AI 的完整对话）存成 JSON，「导入回放」可以再看一遍。
 
 没有 key 也能点「用假模型试跑一局」看流程（假模型说的是随机的套话，只用来看流程，不代表效果）。`?demo=1` 直接进试跑。
+
+### 装到手机上
+
+两种方式，任选：
+
+- **添加到主屏幕（安卓、iPhone 都行，不用装包）**：用手机浏览器打开在线地址。安卓 Chrome 点菜单里的「添加到主屏幕 / 安装应用」，iPhone Safari 点分享按钮里的「添加到主屏幕」。之后从桌面图标打开就是全屏的，网页更新它也跟着更新。
+- **安卓 APK**：下载上面的 `ai-wolf-pro.apk` 安装。每次往仓库推代码，GitHub Actions 会自动重新打包并替换 Release 里的文件。APK 里的请求走原生网络，不受浏览器跨域限制。
+
+手机上界面会自动变成「牌桌在上、记录在下」，设置收进左上角的 ⚙️。
+
+APK 默认用 debug 签名，密钥存在 Actions 缓存里以便新包覆盖旧包；缓存如果过期，新包会装不上，需要先卸载旧版（key 会丢，要重填）。想要稳定的签名，在仓库 Settings → Secrets 里配 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD` 四项即可。
 
 ### 关于跨域
 
@@ -82,6 +95,8 @@ src/roles.js             六种角色、各人数默认板子
 src/personas.js          性格卡池
 src/providers.js         三种接口 + 离线假模型
 src/app.js               界面
+manifest.webmanifest / sw.js / icons/   可安装（PWA）所需
+android-app/             Capacitor 打包配置，只在 GitHub Actions 里用
 test/                    假模型全流程测试、信息边界测试、解析测试
 ```
 

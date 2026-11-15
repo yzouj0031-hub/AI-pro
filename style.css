@@ -139,9 +139,48 @@ dialog form { display: flex; flex-direction: column; gap: 10px; }
 dialog h3 { margin: 0 0 4px; }
 .dialog-actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
 
-@media (max-width: 1100px) {
-  .layout { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+.close-settings { display: none; width: 100%; margin-bottom: 14px; }
+
+/* 平板：三栏变上下 */
+@media (max-width: 1100px) and (min-width: 761px) {
+  .layout { grid-template-columns: 1fr; grid-template-rows: auto auto auto; overflow-y: auto; }
   .settings { border-right: none; border-bottom: 1px solid var(--line); max-height: 45vh; }
   .logpane { border-left: none; border-top: 1px solid var(--line); min-height: 50vh; }
   .table { min-height: 420px; }
+}
+
+/* 手机：牌桌在上、记录在下，设置是一层盖上来的抽屉 */
+@media (max-width: 760px) {
+  body { height: 100dvh; overflow: hidden; }
+  .topbar { gap: 6px 8px; padding: calc(6px + env(safe-area-inset-top)) 10px 6px; }
+  .brand { font-size: 15px; }
+  .brand .sub { display: none; }
+  .status { min-width: 0; font-size: 13px; margin-left: auto; }
+  .controls { margin-left: 0; width: 100%; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 2px; scrollbar-width: none; }
+  .controls::-webkit-scrollbar { display: none; }
+  .controls > * { flex: none; white-space: nowrap; }
+  .controls button, .controls select { padding: 5px 9px; font-size: 13px; }
+  #btn-settings { order: -1; }
+  .layout { display: flex; flex-direction: column; position: relative; }
+  .settings { position: absolute; inset: 0; z-index: 20; border: none; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .close-settings { display: block; position: sticky; top: 0; z-index: 2; }
+  .stage { flex: none; }
+  .table { flex: none; width: min(100vw - 16px, 42dvh); aspect-ratio: 1; min-height: 0; margin: 8px auto 4px; }
+  .phase-icon { font-size: 28px; }
+  .phase-text { font-size: 11px; }
+  .seat { width: 58px; padding: 4px 2px 3px; border-radius: 9px; }
+  .seat .avatar { font-size: 18px; }
+  .seat .name { font-size: 11px; margin-top: 1px; line-height: 1.2; white-space: nowrap; overflow: hidden; }
+  .seat .name small { position: absolute; top: 2px; left: 4px; margin: 0; font-size: 9px; }
+  .seat .model { display: none; }
+  .seat .role { font-size: 10px; padding: 0 4px; margin-top: 1px; max-width: 100%; overflow: hidden; white-space: nowrap; }
+  .seat .bubble { display: none; }
+  .seat.dead .avatar::after { content: ''; }
+  .human-bar { margin: 4px 8px; padding: 8px; }
+  .human-task { max-height: 22dvh; font-size: 13px; }
+  .logpane { flex: 1; min-height: 0; border-left: none; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+  .log-tabs .tab { padding: 7px; }
+  .log, .mind { padding: 8px; }
+  dialog { width: 94vw; }
+  input, select, textarea { font-size: 16px; } /* 防止 iOS 聚焦时自动放大 */
 }

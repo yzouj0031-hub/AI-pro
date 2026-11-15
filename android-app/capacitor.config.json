@@ -1,0 +1,14 @@
+{
+  "appId": "com.aiwolf.table",
+  "appName": "AI狼人杀Pro",
+  "webDir": "www",
+  "backgroundColor": "#15161b",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

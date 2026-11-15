@@ -2,11 +2,18 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d1f26">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AI狼人杀">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>AI 狼人杀 · 一桌会聊天的 AI</title>
 <meta name="description" content="让不同大模型坐在一桌打狼人杀。每个 AI 是一个有记忆、有性格的参与者，不是读卷宗的旁观者。">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 </head>
 <body>
 <header class="topbar">
@@ -34,6 +41,7 @@
 
 <main class="layout">
   <aside class="settings" id="settings">
+    <button id="btn-close-settings" class="close-settings primary">设置好了，回到牌桌</button>
     <section>
       <h2>模型库 <button id="btn-add-model" class="small">＋ 添加</button></h2>
       <p class="hint">key 只存在你浏览器的 localStorage 里，直接从浏览器请求各家接口。</p>

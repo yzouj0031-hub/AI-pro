@@ -131,6 +131,9 @@ $('god-view').onchange = e => { settings.god = e.target.checked; persist(); appl
 function applyGod() { document.body.classList.toggle('god', !!settings.god); }
 function bindCheck(id, key) { $(id).checked = !!settings[key]; $(id).onchange = e => { settings[key] = e.target.checked; persist(); }; }
 $('btn-settings').onclick = () => $('settings').classList.toggle('collapsed');
+$('btn-close-settings').onclick = () => $('settings').classList.add('collapsed');
+const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
+const isNativeApp = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
 // ===== 对局 =====
 let game = null;
@@ -185,6 +188,8 @@ async function startGame(mock = false) {
   let players;
   try { players = mock ? buildMockPlayers() : buildPlayers(); } catch (e) { alert(e.message); return; }
   $('log').innerHTML = ''; $('mind-content').innerHTML = '';
+  if (isPhone()) $('settings').classList.add('collapsed');
+  showTab('log');
   paused = false; stepWaiter = null;
   game = new Game({
     cfg: { playerCount: settings.playerCount, composition: settings.composition, witchSelfSave: settings.witchSelfSave, firstNightLastWords: settings.firstNightLastWords, freeTalk: settings.freeTalk, winMode: settings.winMode, wolfChatRounds: settings.wolfChatRounds },
@@ -220,6 +225,13 @@ $('btn-step').onclick = () => stepResolve();
 $('btn-export').onclick = () => {
   if (!game) return;
   const data = game.export();
+  if (isNativeApp()) {
+    // 安卓壳里 <a download> 不生效：改成复制到剪贴板
+    navigator.clipboard.writeText(JSON.stringify(data)).then(
+      () => alert('整局记录已复制到剪贴板，粘贴到备忘录或发给自己就能保存。'),
+      () => alert('复制失败，请在浏览器版里导出。'));
+    return;
+  }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `aiwolf-${new Date().toISOString().replace(/[:.]/g, '-')}.json`; a.click();
@@ -422,3 +434,7 @@ onPhase({ phase: 'idle', day: 0 });
 $('phase-text').textContent = '等待开局';
 $('status').textContent = '未开始';
 if (location.search.includes('demo=1')) startGame(true);
+// 手机上：已经配过模型就直接看牌桌，没配过就先停在设置页
+if (isPhone() && enabledModels().length && !location.search.includes('demo=1')) $('settings').classList.add('collapsed');
+// 浏览器里注册 service worker（可安装、断网可打开）；安卓壳里资源本来就在本地，不需要
+if ('serviceWorker' in navigator && !isNativeApp() && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

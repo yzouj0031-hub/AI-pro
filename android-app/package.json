@@ -1,0 +1,17 @@
+{
+  "name": "ai-wolf-table-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "把网页版用 Capacitor 打包成安卓 APK。只在 GitHub Actions 里用，网页本身不依赖这里的任何东西。",
+  "scripts": {
+    "build:www": "node build-www.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2"
+  }
+}
