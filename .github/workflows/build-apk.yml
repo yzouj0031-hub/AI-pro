@@ -132,18 +132,44 @@ jobs:
             echo "signed=正式" >> "$GITHUB_OUTPUT"
           else
             echo "未配置发布签名密钥，使用 debug 签名"
-            ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee ../gradle-build.log
+            # 显式指定签名密钥。不指定的话 Gradle 不一定用 ~/.android 下的那把，
+            # 每次打包签名都不同，新包就没法覆盖安装旧包。
+            ./gradlew assembleDebug --no-daemon --stacktrace \
+              -Pandroid.injected.signing.store.file="$HOME/.android/debug.keystore" \
+              -Pandroid.injected.signing.store.password=android \
+              -Pandroid.injected.signing.key.alias=androiddebugkey \
+              -Pandroid.injected.signing.key.password=android 2>&1 | tee ../gradle-build.log
             cp app/build/outputs/apk/debug/app-debug.apk ../ai-wolf-pro.apk
             echo "signed=debug" >> "$GITHUB_OUTPUT"
           fi
           cd ..
           ls -la ai-wolf-pro.apk
 
+      # 自检：包上的签名证书必须就是缓存里那把密钥的证书，否则覆盖安装会失败
+      - name: Verify signing certificate
+        id: cert
+        run: |
+          set -e
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          APK_FP="$("$BT/apksigner" verify --print-certs ai-wolf-pro.apk | grep -m1 'certificate SHA-256 digest' | awk '{print $NF}')"
+          echo "APK 签名证书 SHA-256: $APK_FP"
+          echo "fingerprint=$APK_FP" >> "$GITHUB_OUTPUT"
+          echo "签名证书 SHA-256: \`$APK_FP\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.build.outputs.signed }}" = "debug" ]; then
+            KS_FP="$(keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep -m1 'SHA256:' | awk '{print $2}' | tr -d ':' | tr 'A-F' 'a-f')"
+            echo "缓存密钥证书 SHA-256: $KS_FP"
+            if [ "$APK_FP" != "$KS_FP" ]; then
+              echo "::error::APK 的签名和缓存里的密钥不一致，新包将无法覆盖安装旧包"
+              exit 1
+            fi
+          fi
+
       # APP 启动时读这个文件判断有没有新版（更新提醒）
       - name: Write version.json
         env:
           BUILD_NUMBER: ${{ steps.ver.outputs.build }}
           BUILD_VERSION: ${{ steps.ver.outputs.name }}
+          CERT_SHA256: ${{ steps.cert.outputs.fingerprint }}
         run: |
           NOTES="$(git log -1 --pretty=%s)" node -e '
             const fs = require("fs");
@@ -152,6 +178,7 @@ jobs:
               version: process.env.BUILD_VERSION,
               notes: process.env.NOTES || "",
               date: new Date().toISOString(),
+              cert: process.env.CERT_SHA256 || "",
               apk: "https://github.com/" + process.env.GITHUB_REPOSITORY + "/releases/download/android-latest/ai-wolf-pro.apk"
             }, null, 2));
           '
@@ -188,6 +215,7 @@ jobs:
           name: AI狼人杀Pro · 安卓版（最新）
           body: |
             自动构建的安卓 APK（${{ steps.build.outputs.signed }} 签名）· 版本 `${{ steps.ver.outputs.version }}`。
+            签名证书 SHA-256：`${{ steps.cert.outputs.fingerprint }}`（每次打包都应相同，相同才能覆盖安装）。
 
             下载下方的 `ai-wolf-pro.apk`，在手机上安装即可。打开后在「设置 → 模型库」里填模型的 API key。
             安卓版的请求走原生网络，不受浏览器跨域限制，网页版连不上的中转站在这里通常能用。
