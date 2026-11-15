@@ -19,11 +19,34 @@ export const PERSONAS = [
   { name: '涛哥', bio: '做生意的，喜欢讲"我们打个赌"，爱用利益逻辑分析："他这么做对他有什么好处？"' },
 ];
 
-export function pickPersonas(n, rng = Math.random) {
-  const pool = PERSONAS.slice();
+function shuffled(list, rng) {
+  const pool = list.slice();
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return pool.slice(0, n);
+  return pool;
+}
+
+// 名字会被拿去在发言里做匹配，所以桌上不能有互相包含的名字（"老周" 和 "周"）。
+export function namesClash(a, b) { return a.includes(b) || b.includes(a); }
+
+// 名字里去掉空白和会干扰解析的标点，最多 8 个字。
+export function cleanPersonaName(name) {
+  return String(name || '').replace(/[\s、，。；：,.;:（）()<>"'“”‘’]/g, '').slice(0, 8);
+}
+
+// custom: [{ name, bio }]（用户自己写的人设）。
+// mode: 'mix' 自定义和内置混在一起随机抽；'first' 先用自定义，不够再用内置补。
+export function pickPersonas(n, rng = Math.random, { custom = [], mode = 'mix' } = {}) {
+  const mine = [];
+  for (const c of custom) {
+    const name = cleanPersonaName(c.name);
+    if (!name || !String(c.bio || '').trim()) continue;
+    if (mine.some(m => namesClash(m.name, name))) continue;
+    mine.push({ name, bio: String(c.bio).trim(), custom: true });
+  }
+  const builtin = PERSONAS.filter(p => !mine.some(m => namesClash(m.name, p.name)));
+  if (mode === 'first') return shuffled(mine, rng).concat(shuffled(builtin, rng)).slice(0, n);
+  return shuffled(mine.concat(builtin), rng).slice(0, n);
 }

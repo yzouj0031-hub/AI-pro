@@ -17,7 +17,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">🐺 AI 狼人杀 <span class="sub">一桌会聊天的 AI</span></div>
+  <div class="brand">AI 狼人杀 <span class="sub">一桌会聊天的 AI</span></div>
   <div class="status" id="status">未开始</div>
   <div class="controls">
     <button id="btn-start" class="primary">开始对局</button>
@@ -35,7 +35,7 @@
     <button id="btn-export" disabled>导出记录</button>
     <button id="btn-import">导入回放</button>
     <input type="file" id="file-import" accept="application/json" hidden>
-    <button id="btn-settings" class="icon" title="设置">⚙️</button>
+    <button id="btn-settings" title="设置">设置</button>
   </div>
 </header>
 
@@ -49,9 +49,31 @@
   <aside class="settings" id="settings">
     <button id="btn-close-settings" class="close-settings primary">设置好了，回到牌桌</button>
     <section>
+      <h2>Key 库 <button id="btn-add-key" class="small">＋ 添加</button></h2>
+      <p class="hint">key 存一次，下面的模型随便挑着用；换 key 只改这里。只存在你浏览器的 localStorage 里，直接从浏览器请求各家接口。</p>
+      <ul id="key-list" class="model-list"></ul>
+    </section>
+
+    <section>
       <h2>模型库 <button id="btn-add-model" class="small">＋ 添加</button></h2>
-      <p class="hint">key 只存在你浏览器的 localStorage 里，直接从浏览器请求各家接口。</p>
+      <p class="hint">勾上的模型参与对局。每行右边可以直接换它用的 key。</p>
       <ul id="model-list" class="model-list"></ul>
+    </section>
+
+    <section>
+      <h2>人设 <button id="btn-add-persona" class="small">＋ 添加</button></h2>
+      <p class="hint">自己写的人设会坐上桌。勾掉的暂时不用。</p>
+      <ul id="persona-list" class="model-list"></ul>
+      <div class="row">
+        <label>座位不够分时 <select id="persona-mode">
+          <option value="first">先用我写的，不够再用内置补</option>
+          <option value="mix">我写的和内置的混在一起随机抽</option>
+        </select></label>
+      </div>
+      <details>
+        <summary>看看内置的人设</summary>
+        <ul id="builtin-personas" class="hint builtin-personas"></ul>
+      </details>
     </section>
 
     <section>
@@ -79,7 +101,7 @@
         </select></label>
         <label>狼人夜间商量轮数 <select id="opt-wolfrounds"><option value="1">1</option><option value="2">2</option><option value="0">不商量</option></select></label>
       </details>
-      <button id="btn-demo" class="ghost">🧪 用假模型试跑一局（不花钱）</button>
+      <button id="btn-demo" class="ghost">用假模型试跑一局（不花钱）</button>
     </section>
 
     <section id="app-version" hidden>
@@ -103,7 +125,7 @@
   <section class="stage">
     <div class="table" id="table">
       <div class="table-center" id="table-center">
-        <div class="phase-icon" id="phase-icon">🌙</div>
+        <div class="phase-icon" id="phase-icon">狼</div>
         <div class="phase-text" id="phase-text">等待开局</div>
       </div>
     </div>
@@ -133,25 +155,74 @@
 <dialog id="model-dialog">
   <form method="dialog" id="model-form">
     <h3 id="model-dialog-title">添加模型</h3>
-    <label>快速选择
-      <select id="mf-preset"><option value="">— 自定义 —</option></select>
+    <label>用哪个 key
+      <span class="inline">
+        <select id="mf-key"></select>
+        <button type="button" id="mf-new-key" class="small">新 key</button>
+      </span>
     </label>
-    <label>显示名 <input id="mf-label" placeholder="例如 GPT-4o" required></label>
-    <label>接口类型
-      <select id="mf-type">
-        <option value="openai">OpenAI 兼容（OpenAI / DeepSeek / Qwen / Kimi / Grok / OpenRouter / 中转）</option>
-        <option value="anthropic">Anthropic</option>
-        <option value="gemini">Google Gemini</option>
-      </select>
+    <label>模型名
+      <span class="inline">
+        <input id="mf-model" placeholder="点右边拉取，或手填" required autocomplete="off">
+        <button type="button" id="mf-fetch" class="small">拉取模型</button>
+      </span>
     </label>
-    <label>Base URL <input id="mf-url" placeholder="https://api.openai.com/v1"></label>
-    <label>模型名 <input id="mf-model" placeholder="gpt-4o" required></label>
-    <label>API Key <input id="mf-key" type="password" autocomplete="off"></label>
+    <span id="mf-fetch-result" class="hint"></span>
+    <div id="mf-model-options" class="model-options" hidden></div>
+    <label>显示名 <input id="mf-label" placeholder="不填就用模型名"></label>
     <div class="dialog-actions">
       <button type="button" id="mf-test" class="ghost">测试连接</button>
       <span id="mf-test-result" class="hint"></span>
       <span class="spacer"></span>
       <button type="button" id="mf-cancel">取消</button>
+      <button type="submit" class="primary">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="key-dialog">
+  <form method="dialog" id="key-form">
+    <h3 id="key-dialog-title">添加 key</h3>
+    <label>快速选择
+      <select id="kf-preset"><option value="">— 自定义 —</option></select>
+    </label>
+    <label>名称 <input id="kf-name" placeholder="例如 DeepSeek 主号" required></label>
+    <label>接口类型
+      <select id="kf-type">
+        <option value="openai">OpenAI 兼容（OpenAI / DeepSeek / Qwen / Kimi / Grok / OpenRouter / 中转）</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="gemini">Google Gemini</option>
+      </select>
+    </label>
+    <label>Base URL <input id="kf-url" placeholder="https://api.openai.com/v1"></label>
+    <label>API Key
+      <span class="inline">
+        <input id="kf-key" type="password" autocomplete="off">
+        <button type="button" id="kf-show" class="small">显示</button>
+      </span>
+    </label>
+    <div class="dialog-actions">
+      <button type="button" id="kf-test" class="ghost">测试（拉取模型）</button>
+      <span id="kf-test-result" class="hint"></span>
+      <span class="spacer"></span>
+      <button type="button" id="kf-cancel">取消</button>
+      <button type="submit" class="primary">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="persona-dialog">
+  <form method="dialog" id="persona-form">
+    <h3 id="persona-dialog-title">添加人设</h3>
+    <label>名字 <input id="pf-name" placeholder="两三个字，好叫的，例如 老周" maxlength="8" required></label>
+    <label>这个人是谁
+      <textarea id="pf-bio" rows="5" maxlength="400" required placeholder="例如：开出租二十年，见人多了。话不多，但一旦盯上谁就会一直追问同一个细节。"></textarea>
+    </label>
+    <p class="hint">写这个人是谁、平时怎么说话就够了。不用写台词和打法，写多了反而像在背稿。</p>
+    <span id="pf-error" class="hint bad"></span>
+    <div class="dialog-actions">
+      <span class="spacer"></span>
+      <button type="button" id="pf-cancel">取消</button>
       <button type="submit" class="primary">保存</button>
     </div>
   </form>

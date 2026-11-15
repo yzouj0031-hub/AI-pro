@@ -52,8 +52,7 @@ function trimSlash(u) { return String(u || '').replace(/\/+$/, ''); }
 export class OpenAIProvider {
   constructor(cfg) { this.cfg = cfg; this.label = cfg.label || cfg.model; }
   async chat({ system, messages, temperature, maxTokens }) {
-    let base = trimSlash(this.cfg.baseUrl || 'https://api.openai.com/v1');
-    if (!/\/v\d+(\/|$)/.test(base) && !/\/openai$/.test(base) && !this.cfg.rawUrl) base += '/v1';
+    const base = openaiBase(this.cfg);
     const body = {
       model: this.cfg.model,
       messages: [{ role: 'system', content: system }].concat(messages),
@@ -167,4 +166,49 @@ export class MockProvider {
     ];
     return this.pick(speeches);
   }
+}
+
+// ===== 拉取模型列表 =====
+// 用 key 直接问接口"你有哪些模型"，省得手填模型名。返回排好序的模型 id 数组。
+function openaiBase(cfg) {
+  let base = trimSlash(cfg.baseUrl || 'https://api.openai.com/v1');
+  if (!/\/v\d+(\/|$)/.test(base) && !/\/openai$/.test(base) && !cfg.rawUrl) base += '/v1';
+  return base;
+}
+
+export async function listModels(cfg) {
+  let ids = [];
+  if (cfg.type === 'anthropic') {
+    const base = trimSlash(cfg.baseUrl || 'https://api.anthropic.com');
+    const root = /\/v1$/.test(base) ? base : `${base}/v1`;
+    const headers = { 'x-api-key': cfg.apiKey || '', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+    let after = '';
+    for (let page = 0; page < 5; page++) {
+      const data = await fetchJSON(`${root}/models?limit=1000${after ? `&after_id=${encodeURIComponent(after)}` : ''}`, { headers }, 30000);
+      ids.push(...(data?.data || []).map(m => m.id));
+      if (!data?.has_more || !data.last_id) break;
+      after = data.last_id;
+    }
+  } else if (cfg.type === 'gemini') {
+    const base = trimSlash(cfg.baseUrl || 'https://generativelanguage.googleapis.com');
+    let token = '';
+    for (let page = 0; page < 5; page++) {
+      const data = await fetchJSON(`${base}/v1beta/models?pageSize=1000&key=${encodeURIComponent(cfg.apiKey || '')}${token ? `&pageToken=${encodeURIComponent(token)}` : ''}`, {}, 30000);
+      ids.push(...(data?.models || [])
+        .filter(m => !m.supportedGenerationMethods || m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => String(m.name || '').replace(/^models\//, '')));
+      if (!data?.nextPageToken) break;
+      token = data.nextPageToken;
+    }
+  } else {
+    const headers = {};
+    if (cfg.apiKey) headers.Authorization = `Bearer ${cfg.apiKey}`;
+    if (cfg.extraHeaders) Object.assign(headers, cfg.extraHeaders);
+    const data = await fetchJSON(`${openaiBase(cfg)}/models`, { headers }, 30000);
+    const arr = Array.isArray(data) ? data : data?.data || data?.models || [];
+    ids = arr.map(m => (typeof m === 'string' ? m : m.id || m.name));
+  }
+  ids = [...new Set(ids.filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b));
+  if (!ids.length) throw new Error('接口没有返回任何模型');
+  return ids;
 }
