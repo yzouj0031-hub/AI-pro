@@ -31,9 +31,9 @@ function shuffled(list, rng) {
 // 名字会被拿去在发言里做匹配，所以桌上不能有互相包含的名字（"老周" 和 "周"）。
 export function namesClash(a, b) { return a.includes(b) || b.includes(a); }
 
-// 名字里去掉空白和会干扰解析的标点，最多 8 个字。
+// 名字里去掉会干扰解析的标点，空白压成单个空格，最多 16 个字符（够写 "Light Yagami" 这样的名字）。
 export function cleanPersonaName(name) {
-  return String(name || '').replace(/[\s、，。；：,.;:（）()<>"'“”‘’]/g, '').slice(0, 8);
+  return String(name || '').replace(/[、，。；：,.;:（）()<>"'“”‘’]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16).trim();
 }
 
 // custom: [{ name, bio }]（用户自己写的人设）。

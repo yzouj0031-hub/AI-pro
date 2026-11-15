@@ -144,7 +144,7 @@ export class Game {
         if (night > 30) { this.winner = 'draw'; break; }
       }
       this.setPhase('end');
-      const text = this.winner === 'wolf' ? '🐺 狼人阵营获胜' : this.winner === 'village' ? '🏡 好人阵营获胜' : '平局';
+      const text = this.winner === 'wolf' ? '狼人阵营获胜' : this.winner === 'village' ? '好人阵营获胜' : '平局';
       this.emit({ type: 'end', text, winner: this.winner, roles: this.players.map(p => ({ seat: p.seat, name: p.name, role: p.role, alive: p.alive })) });
       this.tell(this.players, `游戏结束。${text}。各人身份：${this.players.map(p => `${this.tag(p)}=${ROLES[p.role].name}`).join('，')}`);
       return this.winner;

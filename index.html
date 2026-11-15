@@ -39,23 +39,43 @@
     </div>
 
     <section class="panel settings-panel" id="settings-panel">
-      <div class="panel-head">⚙ 设置面板</div>
+      <div class="panel-head">设置面板</div>
       <button class="settings-summary" id="settings-summary">
-        <span class="ss-title">⚙ 对局设置</span>
+        <span class="ss-title">对局设置</span>
         <span class="ss-text" id="settings-summary-text"></span>
         <span class="ss-toggle" id="settings-summary-toggle">展开</span>
       </button>
       <div class="settings-body" id="settings-body" hidden>
         <div class="settings-grid">
           <div class="block">
+            <h3>Key 库 <button id="btn-add-key" class="btn small">＋ 添加</button></h3>
+            <p class="hint">key 存一次，下面的模型随便挑着用；换 key 只改这里。只存在这台设备上，请求直接发给各家接口。</p>
+            <ul id="key-list" class="model-list"></ul>
+          </div>
+          <div class="block">
             <h3>模型库 <button id="btn-add-model" class="btn small">＋ 添加</button></h3>
-            <p class="hint">key 只存在这台设备上，请求直接发给各家接口。勾选的模型会被随机分给没指定模型的座位。</p>
+            <p class="hint">勾上的模型会被随机分给没指定模型的座位。每行可以直接换它用的 key。</p>
             <ul id="model-list" class="model-list"></ul>
+          </div>
+          <div class="block">
+            <h3>人设 <button id="btn-add-persona" class="btn small">＋ 添加</button></h3>
+            <p class="hint">自己写的人设会自动坐上桌。勾掉的暂时不用。也可以直接点座位改那一个人。</p>
+            <ul id="persona-list" class="model-list"></ul>
+            <label class="inline">重新发人设时 <select id="persona-mode">
+              <option value="first">先用我写的，不够再用内置补</option>
+              <option value="mix">我写的和内置的混在一起随机抽</option>
+            </select></label>
+            <div class="row"><button id="btn-reroll" class="btn small">全部座位重新发一批人设</button></div>
+            <details>
+              <summary>看看内置的人设</summary>
+              <ul id="builtin-personas" class="hint builtin-personas"></ul>
+            </details>
           </div>
           <div class="block">
             <h3>这一局</h3>
             <label class="inline">人数 <select id="player-count"></select></label>
             <div class="comp" id="composition"></div>
+            <p class="hint">点两侧的座位，可以改名讳、人设、头像，指定用哪个模型、拿什么身份，或者自己坐上去。</p>
             <details>
               <summary>规则细节</summary>
               <label class="check"><input type="checkbox" id="opt-selfsave"> 女巫可以自救</label>
@@ -67,11 +87,6 @@
               </select></label>
               <label class="inline">狼人夜间商量 <select id="opt-wolfrounds"><option value="1">1 轮</option><option value="2">2 轮</option><option value="0">不商量</option></select></label>
             </details>
-          </div>
-          <div class="block">
-            <h3>座位</h3>
-            <p class="hint">点两侧的座位，可以改名字、人设、头像，指定用哪个模型、拿什么身份，或者自己坐上去。</p>
-            <button id="btn-reroll" class="btn small">全部换成随机人设</button>
           </div>
         </div>
       </div>
@@ -90,12 +105,12 @@
 
     <div class="actions">
       <button id="btn-start" class="act rose">▷ 开局</button>
-      <button id="btn-step" class="act" disabled>⏭ 继续</button>
-      <button id="btn-auto" class="act violet">⟳ 自动</button>
+      <button id="btn-step" class="act" disabled>继续</button>
+      <button id="btn-auto" class="act violet">自动</button>
     </div>
 
     <div class="more">
-      <button id="btn-more" class="more-toggle">··· 更多功能 ⌄</button>
+      <button id="btn-more" class="more-toggle">··· 更多功能</button>
       <div class="more-body" id="more-body" hidden>
         <label class="inline">节奏 <select id="speed">
           <option value="0">不等待</option>
@@ -106,7 +121,7 @@
         <label class="check"><input type="checkbox" id="god-view"> 上帝视角</label>
         <button id="btn-export" class="btn small" disabled>导出记录</button>
         <button id="btn-import" class="btn small">导入回放</button>
-        <button id="btn-demo" class="btn small">🧪 假模型试跑</button>
+        <button id="btn-demo" class="btn small">假模型试跑</button>
         <span id="app-version" hidden><span id="app-version-text" class="hint"></span> <button id="btn-check-update" class="btn small">检查更新</button> <span class="hint" id="app-update-result"></span></span>
         <input type="file" id="file-import" accept="application/json" hidden>
       </div>
@@ -123,31 +138,34 @@
 <dialog id="seat-dialog">
   <form method="dialog" id="seat-form">
     <div class="dlg-head">
-      <h3 id="sf-title">⚙ P1</h3>
+      <h3 id="sf-title">P1</h3>
       <select id="sf-role"></select>
     </div>
-    <label>名讳 <input id="sf-name" maxlength="12" required></label>
+    <label>名讳 <input id="sf-name" maxlength="16" required></label>
     <label>模型
       <div class="row">
         <select id="sf-model"></select>
-        <button type="button" id="sf-test" class="btn green">🧪 测试</button>
+        <button type="button" id="sf-test" class="btn green">测试</button>
       </div>
     </label>
     <div class="row">
-      <button type="button" id="sf-new-model" class="btn small">📚 往模型库里加一个</button>
+      <button type="button" id="sf-new-model" class="btn small">往模型库里加一个</button>
       <span id="sf-test-result" class="hint"></span>
     </div>
-    <label>人设 <textarea id="sf-bio" rows="4" placeholder="这个人是谁、怎么说话。例如：你是死亡笔记里的 L。"></textarea></label>
+    <label>人设
+      <select id="sf-persona-pick"></select>
+      <textarea id="sf-bio" rows="4" maxlength="400" placeholder="这个人是谁、怎么说话。例如：你是死亡笔记里的 L。"></textarea>
+    </label>
     <label>头像
       <div class="row">
-        <button type="button" id="sf-upload" class="btn small">📁 上传</button>
+        <button type="button" id="sf-upload" class="btn small">上传</button>
         <button type="button" id="sf-clear-avatar" class="btn small">清除</button>
-        <span class="avatar preview" id="sf-avatar">?</span>
+        <span class="avatar preview" id="sf-avatar"></span>
         <input type="file" id="sf-file" accept="image/*" hidden>
       </div>
     </label>
+    <span id="sf-error" class="hint bad"></span>
     <div class="dialog-actions">
-      <button type="button" id="sf-random" class="btn small">换个随机人设</button>
       <span class="spacer"></span>
       <button type="button" id="sf-cancel" class="btn">取消</button>
       <button type="submit" class="btn rose">保存</button>
@@ -159,29 +177,76 @@
 <dialog id="model-dialog">
   <form method="dialog" id="model-form">
     <div class="dlg-head"><h3 id="model-dialog-title">添加模型</h3></div>
-    <label>快速选择
-      <select id="mf-preset"><option value="">— 自定义 —</option></select>
+    <label>用哪个 key
+      <div class="row">
+        <select id="mf-key"></select>
+        <button type="button" id="mf-new-key" class="btn small">新 key</button>
+      </div>
     </label>
-    <label>显示名 <input id="mf-label" placeholder="例如 Claude"></label>
-    <label>API地址 <input id="mf-url" placeholder="https://api.openai.com/v1"></label>
+    <label>模型名
+      <div class="row">
+        <input id="mf-model" placeholder="点右边拉取，或手填" required autocomplete="off">
+        <button type="button" id="mf-fetch" class="btn small">拉取模型</button>
+      </div>
+    </label>
+    <span id="mf-fetch-result" class="hint"></span>
+    <div id="mf-model-options" class="model-options" hidden></div>
+    <label>显示名 <input id="mf-label" placeholder="不填就用模型名"></label>
+    <div class="dialog-actions">
+      <button type="button" id="mf-test" class="btn green">测试连接</button>
+      <span id="mf-test-result" class="hint"></span>
+      <span class="spacer"></span>
+      <button type="button" id="mf-cancel" class="btn">取消</button>
+      <button type="submit" class="btn rose">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Key 库条目 -->
+<dialog id="key-dialog">
+  <form method="dialog" id="key-form">
+    <div class="dlg-head"><h3 id="key-dialog-title">添加 key</h3></div>
+    <label>快速选择
+      <select id="kf-preset"><option value="">— 自定义 —</option></select>
+    </label>
+    <label>名称 <input id="kf-name" placeholder="例如 DeepSeek 主号" required></label>
+    <label>API地址 <input id="kf-url" placeholder="https://api.openai.com/v1"></label>
     <label>渠道
-      <select id="mf-type">
+      <select id="kf-type">
         <option value="openai">OpenAI 兼容（OpenAI / DeepSeek / Qwen / Kimi / Grok / OpenRouter / 中转）</option>
         <option value="anthropic">Anthropic</option>
         <option value="gemini">Google Gemini</option>
       </select>
     </label>
-    <label>API密钥 <input id="mf-key" type="password" autocomplete="off"></label>
-    <label>模型
+    <label>API密钥
       <div class="row">
-        <input id="mf-model" placeholder="模型名" required>
-        <button type="button" id="mf-test" class="btn green">🧪 测试</button>
+        <input id="kf-key" type="password" autocomplete="off">
+        <button type="button" id="kf-show" class="btn small">显示</button>
       </div>
     </label>
-    <span id="mf-test-result" class="hint"></span>
+    <div class="dialog-actions">
+      <button type="button" id="kf-test" class="btn green">测试（拉取模型）</button>
+      <span id="kf-test-result" class="hint"></span>
+      <span class="spacer"></span>
+      <button type="button" id="kf-cancel" class="btn">取消</button>
+      <button type="submit" class="btn rose">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 人设库条目 -->
+<dialog id="persona-dialog">
+  <form method="dialog" id="persona-form">
+    <div class="dlg-head"><h3 id="persona-dialog-title">添加人设</h3></div>
+    <label>名字 <input id="pf-name" placeholder="好叫的名字，例如 老周" maxlength="16" required></label>
+    <label>这个人是谁
+      <textarea id="pf-bio" rows="5" maxlength="400" required placeholder="例如：开出租二十年，见人多了。话不多，但一旦盯上谁就会一直追问同一个细节。"></textarea>
+    </label>
+    <p class="hint">写这个人是谁、平时怎么说话就够了。不用写台词和打法，写多了反而像在背稿。</p>
+    <span id="pf-error" class="hint bad"></span>
     <div class="dialog-actions">
       <span class="spacer"></span>
-      <button type="button" id="mf-cancel" class="btn">取消</button>
+      <button type="button" id="pf-cancel" class="btn">取消</button>
       <button type="submit" class="btn rose">保存</button>
     </div>
   </form>

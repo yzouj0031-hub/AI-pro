@@ -59,7 +59,9 @@ label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--t
 
 .seat { position: relative; flex: 1 1 0; min-height: 76px; max-height: 150px; background: linear-gradient(180deg, #131126, #0d0c19); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 8px; cursor: pointer; transition: border-color .25s, box-shadow .25s, opacity .25s; text-align: left; }
 .seat:hover { border-color: var(--line-2); }
-.avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-2); background: #1a1730; color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 15px; overflow: hidden; flex: none; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-2); background: #1a1730; color: var(--violet); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; overflow: hidden; flex: none; }
+.seat.human .avatar { background: #1d3a30; border-color: #3d8a6c; color: var(--village); }
+.seat.dead .avatar { text-decoration: line-through; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .seat .info { display: block; min-width: 0; }
 .seat .name { display: block; font-family: var(--serif); font-weight: 700; font-size: 15px; line-height: 1.25; overflow-wrap: break-word; }
@@ -93,12 +95,25 @@ label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--t
 .block details { margin-top: 10px; }
 .block details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 .block details label { margin: 8px 0; }
-.model-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.model-list li { display: flex; align-items: center; gap: 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
-.model-list li .mname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.model-list li .meta { color: var(--muted); font-size: 11px; display: block; }
+.model-list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.model-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+.model-list li .mname { flex: 1 1 60px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-list li .meta { color: var(--muted); font-size: 11px; display: block; overflow: hidden; text-overflow: ellipsis; }
 .model-list li.disabled { opacity: .5; }
+.model-list li.broken .meta { color: var(--wolf); }
 .model-list .empty { color: var(--muted); font-size: 12px; justify-content: center; text-align: center; }
+.model-list .no { flex: none; font-size: 11px; font-weight: 600; color: var(--violet); border: 1px solid var(--line-2); border-radius: 6px; padding: 1px 5px; font-variant-numeric: tabular-nums; }
+.model-list .keysel { flex: 1 0 100%; flex-direction: row; align-items: center; gap: 6px; font-size: 12px; }
+.model-list .keysel select { flex: 1; min-width: 0; padding: 2px 6px; font-size: 12px; }
+.model-options { max-height: 180px; overflow-y: auto; border: 1px solid var(--line-2); border-radius: 8px; background: var(--bg); }
+.model-options button { display: block; width: 100%; text-align: left; border: none; border-radius: 0; background: transparent; padding: 6px 10px; font-size: 13px; word-break: break-all; }
+.model-options button:hover { background: var(--panel-2); }
+.model-options button.picked { color: var(--violet); font-weight: 600; }
+.model-options .none { padding: 8px 10px; color: var(--muted); font-size: 12px; }
+.hint.bad { color: var(--wolf); }
+.hint.bad:empty { display: none; }
+.builtin-personas { padding-left: 18px; margin: 8px 0; }
+.builtin-personas b { color: var(--text); font-weight: 600; }
 .comp { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
 .comp label { font-size: 12px; }
 .comp input { width: 100%; padding: 6px 8px; }
