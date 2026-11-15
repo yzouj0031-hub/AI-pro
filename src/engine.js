@@ -18,7 +18,7 @@ export const DEFAULT_CFG = {
 export class Game {
   /**
    * players: [{ seat, name, role, persona, agent, modelLabel }]
-   * hooks:  { onEvent(evt), onPhase(info), gate() => Promise }  都可选
+   * hooks:  { onEvent(evt), onPhase(info), onBusy(seat, bool), gate() => Promise }  都可选
    */
   constructor({ cfg, players, hooks = {}, rng = Math.random }) {
     this.cfg = { ...DEFAULT_CFG, ...cfg };
@@ -105,7 +105,15 @@ export class Game {
     return target;
   }
 
+  busy(p, on) { try { this.hooks.onBusy && this.hooks.onBusy(p.seat, on); } catch (err) { console.error(err); } }
+
   async withRetry(p, fn) {
+    this.busy(p, true);
+    try { return await this._withRetry(p, fn); }
+    finally { this.busy(p, false); }
+  }
+
+  async _withRetry(p, fn) {
     let lastErr = null;
     for (let i = 0; i <= this.cfg.maxRetries; i++) {
       try { return await fn(); }

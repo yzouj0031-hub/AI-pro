@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1d1f26">
+<meta name="theme-color" content="#07060d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,216 +16,184 @@
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">AI 狼人杀 <span class="sub">一桌会聊天的 AI</span></div>
-  <div class="status" id="status">未开始</div>
-  <div class="controls">
-    <button id="btn-start" class="primary">开始对局</button>
-    <button id="btn-pause" disabled>暂停</button>
-    <button id="btn-stop" disabled>终止</button>
-    <label class="speed">节奏 <select id="speed">
-      <option value="0">不等待</option>
-      <option value="800">快</option>
-      <option value="2000" selected>正常</option>
-      <option value="4500">慢</option>
-      <option value="-1">逐步（每步手动）</option>
-    </select></label>
-    <button id="btn-step" disabled title="逐步模式下推进一步">下一步 ▶</button>
-    <label class="toggle"><input type="checkbox" id="god-view" checked> 上帝视角</label>
-    <button id="btn-export" disabled>导出记录</button>
-    <button id="btn-import">导入回放</button>
-    <input type="file" id="file-import" accept="application/json" hidden>
-    <button id="btn-settings" title="设置">设置</button>
-  </div>
-</header>
 
 <div class="update-bar" id="update-bar" hidden>
   <span id="update-text"></span>
-  <a id="update-link" class="btn primary" href="#">下载新版</a>
-  <button id="update-skip" class="small ghost">这版先不更</button>
+  <a id="update-link" class="btn rose" href="#">下载新版</a>
+  <button id="update-skip" class="btn small">这版先不更</button>
 </div>
 
-<main class="layout">
-  <aside class="settings" id="settings">
-    <button id="btn-close-settings" class="close-settings primary">设置好了，回到牌桌</button>
-    <section>
-      <h2>Key 库 <button id="btn-add-key" class="small">＋ 添加</button></h2>
-      <p class="hint">key 存一次，下面的模型随便挑着用；换 key 只改这里。只存在你浏览器的 localStorage 里，直接从浏览器请求各家接口。</p>
-      <ul id="key-list" class="model-list"></ul>
-    </section>
-
-    <section>
-      <h2>模型库 <button id="btn-add-model" class="small">＋ 添加</button></h2>
-      <p class="hint">勾上的模型参与对局。每行右边可以直接换它用的 key。</p>
-      <ul id="model-list" class="model-list"></ul>
-    </section>
-
-    <section>
-      <h2>人设 <button id="btn-add-persona" class="small">＋ 添加</button></h2>
-      <p class="hint">自己写的人设会坐上桌。勾掉的暂时不用。</p>
-      <ul id="persona-list" class="model-list"></ul>
-      <div class="row">
-        <label>座位不够分时 <select id="persona-mode">
-          <option value="first">先用我写的，不够再用内置补</option>
-          <option value="mix">我写的和内置的混在一起随机抽</option>
-        </select></label>
-      </div>
-      <details>
-        <summary>看看内置的人设</summary>
-        <ul id="builtin-personas" class="hint builtin-personas"></ul>
-      </details>
-    </section>
-
-    <section>
-      <h2>这一局</h2>
-      <div class="row">
-        <label>人数 <select id="player-count"></select></label>
-        <label class="toggle"><input type="checkbox" id="human-seat"> 我也上桌</label>
-      </div>
-      <div class="comp" id="composition"></div>
-      <div class="row">
-        <label>模型分配 <select id="assign-mode">
-          <option value="random">随机分给所有勾选的模型</option>
-          <option value="manual">按座位手动指定</option>
-        </select></label>
-      </div>
-      <div id="seat-assign" class="seat-assign" hidden></div>
-      <details>
-        <summary>规则细节</summary>
-        <label class="toggle"><input type="checkbox" id="opt-selfsave"> 女巫可以自救</label>
-        <label class="toggle"><input type="checkbox" id="opt-lastwords" checked> 首夜死者有遗言</label>
-        <label class="toggle"><input type="checkbox" id="opt-freetalk" checked> 轮流发言后有自由讨论</label>
-        <label>胜负 <select id="opt-winmode">
-          <option value="side">屠边（神或民死光狼胜）</option>
-          <option value="all">屠城（狼不少于好人时狼胜）</option>
-        </select></label>
-        <label>狼人夜间商量轮数 <select id="opt-wolfrounds"><option value="1">1</option><option value="2">2</option><option value="0">不商量</option></select></label>
-      </details>
-      <button id="btn-demo" class="ghost">用假模型试跑一局（不花钱）</button>
-    </section>
-
-    <section id="app-version" hidden>
-      <h2>安卓版</h2>
-      <p class="hint"><span id="app-version-text"></span> <button id="btn-check-update" class="small">检查更新</button></p>
-      <p class="hint" id="app-update-result"></p>
-      <p class="hint">更新是覆盖安装，填过的 key 和设置都会保留。只有卸载才会清掉。</p>
-    </section>
-
-    <section class="about">
-      <h2>这个版本和别的 AI 狼人杀有什么不同</h2>
-      <ul class="hint">
-        <li>每个 AI 是一段持续的对话：发生的事一条条追加给它，它说过的话就是它的记忆。不会每轮重读整局卷宗。</li>
-        <li>系统提示只讲规则、身份和一句性格，不教怎么打，不给发言模板。</li>
-        <li>有自由讨论环节，可以插话、回应、也可以不说。</li>
-        <li>投票和夜间行动前它会先对自己说一句理由，上帝视角能看到。</li>
-      </ul>
-    </section>
+<div class="app">
+  <aside class="seats left">
+    <div class="seats-title">— 左 席 —</div>
+    <div class="seat-list" id="seats-left"></div>
   </aside>
 
-  <section class="stage">
-    <div class="table" id="table">
-      <div class="table-center" id="table-center">
-        <div class="phase-icon" id="phase-icon">狼</div>
-        <div class="phase-text" id="phase-text">等待开局</div>
-      </div>
+  <main class="center">
+    <div class="statusbar">
+      <button id="btn-back" class="btn rose">← 退</button>
+      <div class="stat" id="stat-round">第0回</div>
+      <div class="stat" id="stat-phase">等待中</div>
+      <div class="stat" id="stat-alive">存活:0</div>
+      <button id="btn-toggle-settings" class="link">▼ 展开设置</button>
     </div>
+
+    <section class="panel settings-panel" id="settings-panel">
+      <div class="panel-head">⚙ 设置面板</div>
+      <button class="settings-summary" id="settings-summary">
+        <span class="ss-title">⚙ 对局设置</span>
+        <span class="ss-text" id="settings-summary-text"></span>
+        <span class="ss-toggle" id="settings-summary-toggle">展开</span>
+      </button>
+      <div class="settings-body" id="settings-body" hidden>
+        <div class="settings-grid">
+          <div class="block">
+            <h3>模型库 <button id="btn-add-model" class="btn small">＋ 添加</button></h3>
+            <p class="hint">key 只存在这台设备上，请求直接发给各家接口。勾选的模型会被随机分给没指定模型的座位。</p>
+            <ul id="model-list" class="model-list"></ul>
+          </div>
+          <div class="block">
+            <h3>这一局</h3>
+            <label class="inline">人数 <select id="player-count"></select></label>
+            <div class="comp" id="composition"></div>
+            <details>
+              <summary>规则细节</summary>
+              <label class="check"><input type="checkbox" id="opt-selfsave"> 女巫可以自救</label>
+              <label class="check"><input type="checkbox" id="opt-lastwords"> 首夜死者有遗言</label>
+              <label class="check"><input type="checkbox" id="opt-freetalk"> 轮流发言后有自由讨论</label>
+              <label class="inline">胜负 <select id="opt-winmode">
+                <option value="side">屠边（神或民死光狼胜）</option>
+                <option value="all">屠城（狼不少于好人时狼胜）</option>
+              </select></label>
+              <label class="inline">狼人夜间商量 <select id="opt-wolfrounds"><option value="1">1 轮</option><option value="2">2 轮</option><option value="0">不商量</option></select></label>
+            </details>
+          </div>
+          <div class="block">
+            <h3>座位</h3>
+            <p class="hint">点两侧的座位，可以改名字、人设、头像，指定用哪个模型、拿什么身份，或者自己坐上去。</p>
+            <button id="btn-reroll" class="btn small">全部换成随机人设</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="log" id="log"></section>
+
     <div class="human-bar" id="human-bar" hidden>
       <div class="human-task" id="human-task"></div>
       <div class="human-options" id="human-options"></div>
       <div class="human-input">
         <textarea id="human-text" rows="2" placeholder="说点什么…"></textarea>
-        <button id="human-send" class="primary">发送</button>
+        <button id="human-send" class="btn rose">发送</button>
       </div>
     </div>
-  </section>
 
-  <section class="logpane">
-    <div class="log-tabs">
-      <button class="tab active" data-tab="log">对局记录</button>
-      <button class="tab" data-tab="mind">AI 的心里话</button>
+    <div class="actions">
+      <button id="btn-start" class="act rose">▷ 开局</button>
+      <button id="btn-step" class="act" disabled>⏭ 继续</button>
+      <button id="btn-auto" class="act violet">⟳ 自动</button>
     </div>
-    <div class="log" id="log"></div>
-    <div class="mind" id="mind" hidden>
-      <p class="hint">点桌上的某个座位，看它的完整对话：它收到了什么、心里想了什么、说了什么。只在上帝视角下可用。</p>
-      <div id="mind-content"></div>
-    </div>
-  </section>
-</main>
 
-<dialog id="model-dialog">
-  <form method="dialog" id="model-form">
-    <h3 id="model-dialog-title">添加模型</h3>
-    <label>用哪个 key
-      <span class="inline">
-        <select id="mf-key"></select>
-        <button type="button" id="mf-new-key" class="small">新 key</button>
-      </span>
+    <div class="more">
+      <button id="btn-more" class="more-toggle">··· 更多功能 ⌄</button>
+      <div class="more-body" id="more-body" hidden>
+        <label class="inline">节奏 <select id="speed">
+          <option value="0">不等待</option>
+          <option value="800">快</option>
+          <option value="2000">正常</option>
+          <option value="4500">慢</option>
+        </select></label>
+        <label class="check"><input type="checkbox" id="god-view"> 上帝视角</label>
+        <button id="btn-export" class="btn small" disabled>导出记录</button>
+        <button id="btn-import" class="btn small">导入回放</button>
+        <button id="btn-demo" class="btn small">🧪 假模型试跑</button>
+        <span id="app-version" hidden><span id="app-version-text" class="hint"></span> <button id="btn-check-update" class="btn small">检查更新</button> <span class="hint" id="app-update-result"></span></span>
+        <input type="file" id="file-import" accept="application/json" hidden>
+      </div>
+    </div>
+  </main>
+
+  <aside class="seats right">
+    <div class="seats-title">— 右 席 —</div>
+    <div class="seat-list" id="seats-right"></div>
+  </aside>
+</div>
+
+<!-- 座位设置 -->
+<dialog id="seat-dialog">
+  <form method="dialog" id="seat-form">
+    <div class="dlg-head">
+      <h3 id="sf-title">⚙ P1</h3>
+      <select id="sf-role"></select>
+    </div>
+    <label>名讳 <input id="sf-name" maxlength="12" required></label>
+    <label>模型
+      <div class="row">
+        <select id="sf-model"></select>
+        <button type="button" id="sf-test" class="btn green">🧪 测试</button>
+      </div>
     </label>
-    <label>模型名
-      <span class="inline">
-        <input id="mf-model" placeholder="点右边拉取，或手填" required autocomplete="off">
-        <button type="button" id="mf-fetch" class="small">拉取模型</button>
-      </span>
+    <div class="row">
+      <button type="button" id="sf-new-model" class="btn small">📚 往模型库里加一个</button>
+      <span id="sf-test-result" class="hint"></span>
+    </div>
+    <label>人设 <textarea id="sf-bio" rows="4" placeholder="这个人是谁、怎么说话。例如：你是死亡笔记里的 L。"></textarea></label>
+    <label>头像
+      <div class="row">
+        <button type="button" id="sf-upload" class="btn small">📁 上传</button>
+        <button type="button" id="sf-clear-avatar" class="btn small">清除</button>
+        <span class="avatar preview" id="sf-avatar">?</span>
+        <input type="file" id="sf-file" accept="image/*" hidden>
+      </div>
     </label>
-    <span id="mf-fetch-result" class="hint"></span>
-    <div id="mf-model-options" class="model-options" hidden></div>
-    <label>显示名 <input id="mf-label" placeholder="不填就用模型名"></label>
     <div class="dialog-actions">
-      <button type="button" id="mf-test" class="ghost">测试连接</button>
-      <span id="mf-test-result" class="hint"></span>
+      <button type="button" id="sf-random" class="btn small">换个随机人设</button>
       <span class="spacer"></span>
-      <button type="button" id="mf-cancel">取消</button>
-      <button type="submit" class="primary">保存</button>
+      <button type="button" id="sf-cancel" class="btn">取消</button>
+      <button type="submit" class="btn rose">保存</button>
     </div>
   </form>
 </dialog>
 
-<dialog id="key-dialog">
-  <form method="dialog" id="key-form">
-    <h3 id="key-dialog-title">添加 key</h3>
+<!-- 模型库条目 -->
+<dialog id="model-dialog">
+  <form method="dialog" id="model-form">
+    <div class="dlg-head"><h3 id="model-dialog-title">添加模型</h3></div>
     <label>快速选择
-      <select id="kf-preset"><option value="">— 自定义 —</option></select>
+      <select id="mf-preset"><option value="">— 自定义 —</option></select>
     </label>
-    <label>名称 <input id="kf-name" placeholder="例如 DeepSeek 主号" required></label>
-    <label>接口类型
-      <select id="kf-type">
+    <label>显示名 <input id="mf-label" placeholder="例如 Claude"></label>
+    <label>API地址 <input id="mf-url" placeholder="https://api.openai.com/v1"></label>
+    <label>渠道
+      <select id="mf-type">
         <option value="openai">OpenAI 兼容（OpenAI / DeepSeek / Qwen / Kimi / Grok / OpenRouter / 中转）</option>
         <option value="anthropic">Anthropic</option>
         <option value="gemini">Google Gemini</option>
       </select>
     </label>
-    <label>Base URL <input id="kf-url" placeholder="https://api.openai.com/v1"></label>
-    <label>API Key
-      <span class="inline">
-        <input id="kf-key" type="password" autocomplete="off">
-        <button type="button" id="kf-show" class="small">显示</button>
-      </span>
+    <label>API密钥 <input id="mf-key" type="password" autocomplete="off"></label>
+    <label>模型
+      <div class="row">
+        <input id="mf-model" placeholder="模型名" required>
+        <button type="button" id="mf-test" class="btn green">🧪 测试</button>
+      </div>
     </label>
+    <span id="mf-test-result" class="hint"></span>
     <div class="dialog-actions">
-      <button type="button" id="kf-test" class="ghost">测试（拉取模型）</button>
-      <span id="kf-test-result" class="hint"></span>
       <span class="spacer"></span>
-      <button type="button" id="kf-cancel">取消</button>
-      <button type="submit" class="primary">保存</button>
+      <button type="button" id="mf-cancel" class="btn">取消</button>
+      <button type="submit" class="btn rose">保存</button>
     </div>
   </form>
 </dialog>
 
-<dialog id="persona-dialog">
-  <form method="dialog" id="persona-form">
-    <h3 id="persona-dialog-title">添加人设</h3>
-    <label>名字 <input id="pf-name" placeholder="两三个字，好叫的，例如 老周" maxlength="8" required></label>
-    <label>这个人是谁
-      <textarea id="pf-bio" rows="5" maxlength="400" required placeholder="例如：开出租二十年，见人多了。话不多，但一旦盯上谁就会一直追问同一个细节。"></textarea>
-    </label>
-    <p class="hint">写这个人是谁、平时怎么说话就够了。不用写台词和打法，写多了反而像在背稿。</p>
-    <span id="pf-error" class="hint bad"></span>
-    <div class="dialog-actions">
-      <span class="spacer"></span>
-      <button type="button" id="pf-cancel">取消</button>
-      <button type="submit" class="primary">保存</button>
-    </div>
-  </form>
+<!-- 心里话 -->
+<dialog id="mind-dialog" class="wide">
+  <div class="dlg-head">
+    <h3 id="mind-title">心里话</h3>
+    <button id="mind-close" class="btn small">关闭</button>
+  </div>
+  <div id="mind-content" class="mind"></div>
 </dialog>
 
 <script type="module" src="src/app.js"></script>
