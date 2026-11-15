@@ -2,7 +2,9 @@
 
 让不同的大模型坐在一桌打狼人杀。**每个 AI 是一个有记忆、有性格的参与者，而不是每轮重读卷宗的旁观者。**
 
-纯静态页面，没有后端、没有构建步骤，API key 只存在你自己的浏览器里。开 GitHub Pages 就能用。
+**在线地址：<https://yzouj0031-hub.github.io/AI-pro/>**（不填 key 先看流程：<https://yzouj0031-hub.github.io/AI-pro/?demo=1>）
+
+纯静态页面，没有后端、没有构建步骤，API key 只存在你自己的浏览器里。
 
 ## 为什么重做
 
@@ -100,4 +102,4 @@ npm test     # 跑 36 局假模型对局 + 信息边界检查 + 解析用例，�
 
 ## 部署到 GitHub Pages
 
-仓库 Settings → Pages → Source 选分支根目录即可，没有构建。
+只需要开一次：仓库 Settings → Pages → Source 选「Deploy from a branch」→ 选分支、目录选 `/ (root)` → Save。一两分钟后上面的在线地址就能打开。之后每次往这个分支推代码，网址会自动更新，没有构建步骤。
