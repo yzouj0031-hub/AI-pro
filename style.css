@@ -40,6 +40,11 @@ label.toggle { flex-direction: row; align-items: center; gap: 6px; color: var(--
 .controls { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 .controls label { flex-direction: row; align-items: center; gap: 6px; }
 
+.update-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 14px; background: rgba(224,164,88,.14); border-bottom: 1px solid var(--accent); font-size: 13px; }
+.update-bar span { flex: 1; min-width: 160px; }
+a.btn { text-decoration: none; border-radius: 8px; padding: 6px 12px; font-weight: 600; }
+a.btn.primary { background: var(--accent); color: #1a1408; }
+
 .layout { flex: 1; display: grid; grid-template-columns: 320px 1fr 420px; min-height: 0; }
 .settings { background: var(--panel); border-right: 1px solid var(--line); padding: 14px; overflow-y: auto; }
 .settings.collapsed { display: none; }

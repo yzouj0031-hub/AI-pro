@@ -1,0 +1,30 @@
+name: Keep APK signing key
+
+# 没配发布密钥时，APK 的 debug 签名密钥只存在 Actions 缓存里，而缓存 7 天没人读就会被清掉。
+# 密钥一换，新包就没法覆盖安装旧包（得先卸载，本地的 key 会丢）。
+# 这里每 3 天读一次缓存，让它一直留着。配了 ANDROID_KEYSTORE_* 四个 secrets 之后这个文件可以删。
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 */3 * *'
+
+permissions:
+  contents: read
+
+jobs:
+  touch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Touch debug keystore cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: debug-keystore-v1
+      - name: Report
+        run: |
+          if [ "${{ steps.cache.outputs.cache-hit }}" = "true" ]; then
+            echo "签名密钥还在缓存里。"
+          else
+            echo "::warning::缓存里没有签名密钥，下一次打包会生成新的，新包将无法覆盖安装旧包。"
+          fi

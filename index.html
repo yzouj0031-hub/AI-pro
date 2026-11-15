@@ -39,6 +39,12 @@
   </div>
 </header>
 
+<div class="update-bar" id="update-bar" hidden>
+  <span id="update-text"></span>
+  <a id="update-link" class="btn primary" href="#">下载新版</a>
+  <button id="update-skip" class="small ghost">这版先不更</button>
+</div>
+
 <main class="layout">
   <aside class="settings" id="settings">
     <button id="btn-close-settings" class="close-settings primary">设置好了，回到牌桌</button>
@@ -74,6 +80,13 @@
         <label>狼人夜间商量轮数 <select id="opt-wolfrounds"><option value="1">1</option><option value="2">2</option><option value="0">不商量</option></select></label>
       </details>
       <button id="btn-demo" class="ghost">🧪 用假模型试跑一局（不花钱）</button>
+    </section>
+
+    <section id="app-version" hidden>
+      <h2>安卓版</h2>
+      <p class="hint"><span id="app-version-text"></span> <button id="btn-check-update" class="small">检查更新</button></p>
+      <p class="hint" id="app-update-result"></p>
+      <p class="hint">更新是覆盖安装，填过的 key 和设置都会保留。只有卸载才会清掉。</p>
     </section>
 
     <section class="about">

@@ -43,6 +43,7 @@ jobs:
           SHORT="$(git rev-parse --short HEAD)"
           echo "build=$BUILD" >> "$GITHUB_OUTPUT"
           echo "version=1.0.$BUILD ($SHORT)" >> "$GITHUB_OUTPUT"
+          echo "name=1.0.$BUILD" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -64,6 +65,9 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Collect web assets into www/
+        env:
+          BUILD_NUMBER: ${{ steps.ver.outputs.build }}
+          BUILD_VERSION: ${{ steps.ver.outputs.name }}
         run: node build-www.mjs
 
       - name: Add Android platform
@@ -135,6 +139,24 @@ jobs:
           cd ..
           ls -la ai-wolf-pro.apk
 
+      # APP 启动时读这个文件判断有没有新版（更新提醒）
+      - name: Write version.json
+        env:
+          BUILD_NUMBER: ${{ steps.ver.outputs.build }}
+          BUILD_VERSION: ${{ steps.ver.outputs.name }}
+        run: |
+          NOTES="$(git log -1 --pretty=%s)" node -e '
+            const fs = require("fs");
+            fs.writeFileSync("version.json", JSON.stringify({
+              build: Number(process.env.BUILD_NUMBER),
+              version: process.env.BUILD_VERSION,
+              notes: process.env.NOTES || "",
+              date: new Date().toISOString(),
+              apk: "https://github.com/" + process.env.GITHUB_REPOSITORY + "/releases/download/android-latest/ai-wolf-pro.apk"
+            }, null, 2));
+          '
+          cat version.json
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -169,5 +191,7 @@ jobs:
 
             下载下方的 `ai-wolf-pro.apk`，在手机上安装即可。打开后在「设置 → 模型库」里填模型的 API key。
             安卓版的请求走原生网络，不受浏览器跨域限制，网页版连不上的中转站在这里通常能用。
-          files: android-app/ai-wolf-pro.apk
+          files: |
+            android-app/ai-wolf-pro.apk
+            android-app/version.json
           make_latest: true

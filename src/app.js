@@ -424,6 +424,33 @@ async function replay(data) {
   selectedSeat = null;
 }
 
+// ===== 安卓版更新提醒 =====
+// 包里的 build.json 是"我是第几版"，Release 里的 version.json 是"最新是第几版"。
+// 只提醒、不自动装：点「下载新版」交给系统浏览器下载，覆盖安装后 key 和设置都在。
+const UPDATE_URL = 'https://github.com/yzouj0031-hub/AI-pro/releases/download/android-latest/version.json';
+const LS_SKIP = 'aiwolf.update.skip';
+async function checkUpdate(manual = false) {
+  const out = $('app-update-result');
+  try {
+    const local = await (await fetch('build.json', { cache: 'no-store' })).json();
+    $('app-version').hidden = false;
+    $('app-version-text').textContent = `当前版本 ${local.version}`;
+    if (manual) out.textContent = '检查中…';
+    const remote = await (await fetch(`${UPDATE_URL}?t=${Date.now()}`, { cache: 'no-store' })).json();
+    if (!(remote.build > local.build)) { if (manual) out.textContent = '已经是最新版。'; return; }
+    if (manual) out.textContent = `有新版本 ${remote.version}。`;
+    if (!manual && Number(localStorage.getItem(LS_SKIP)) === remote.build) return;
+    $('update-text').textContent = `有新版本 ${remote.version}${remote.notes ? '：' + remote.notes : ''}`;
+    $('update-link').href = remote.apk;
+    $('update-skip').onclick = () => { localStorage.setItem(LS_SKIP, String(remote.build)); $('update-bar').hidden = true; };
+    $('update-bar').hidden = false;
+  } catch (e) {
+    if (manual) out.textContent = `检查失败：${e.message}`;
+  }
+}
+$('btn-check-update').onclick = () => checkUpdate(true);
+if (isNativeApp()) checkUpdate(false);
+
 // ===== 工具 =====
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }

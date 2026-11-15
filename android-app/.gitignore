@@ -4,3 +4,4 @@ android/
 *.apk
 *.jks
 gradle-build.log
+version.json

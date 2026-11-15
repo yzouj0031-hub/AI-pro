@@ -48,7 +48,9 @@
 
 手机上界面会自动变成「牌桌在上、记录在下」，设置收进左上角的 ⚙️。
 
-APK 默认用 debug 签名，密钥存在 Actions 缓存里以便新包覆盖旧包；缓存如果过期，新包会装不上，需要先卸载旧版（key 会丢，要重填）。想要稳定的签名，在仓库 Settings → Secrets 里配 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD` 四项即可。
+**更新**：网址和「添加到主屏幕」永远是最新版，不用管。APK 启动时会检查有没有新版，有就在顶部提示，点「下载新版」后覆盖安装即可；设置里也能手动「检查更新」。覆盖安装不会动本地数据，填过的 key 和设置都保留，只有卸载才会清掉。
+
+**签名**：APK 默认用 debug 签名，密钥存在 Actions 缓存里，并有一个定时任务每 3 天读一次防止缓存过期，所以新包能覆盖旧包。想要万无一失，在仓库 Settings → Secrets 里配 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD` 四项，之后就用你自己的正式签名（切换签名的那一次需要卸载重装）。
 
 ### 关于跨域
 
