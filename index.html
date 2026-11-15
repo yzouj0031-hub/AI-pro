@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 狼人杀 · 一桌会聊天的 AI</title>
+<meta name="description" content="让不同大模型坐在一桌打狼人杀。每个 AI 是一个有记忆、有性格的参与者，不是读卷宗的旁观者。">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🐺 AI 狼人杀 <span class="sub">一桌会聊天的 AI</span></div>
+  <div class="status" id="status">未开始</div>
+  <div class="controls">
+    <button id="btn-start" class="primary">开始对局</button>
+    <button id="btn-pause" disabled>暂停</button>
+    <button id="btn-stop" disabled>终止</button>
+    <label class="speed">节奏 <select id="speed">
+      <option value="0">不等待</option>
+      <option value="800">快</option>
+      <option value="2000" selected>正常</option>
+      <option value="4500">慢</option>
+      <option value="-1">逐步（每步手动）</option>
+    </select></label>
+    <button id="btn-step" disabled title="逐步模式下推进一步">下一步 ▶</button>
+    <label class="toggle"><input type="checkbox" id="god-view" checked> 上帝视角</label>
+    <button id="btn-export" disabled>导出记录</button>
+    <button id="btn-import">导入回放</button>
+    <input type="file" id="file-import" accept="application/json" hidden>
+    <button id="btn-settings" class="icon" title="设置">⚙️</button>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="settings" id="settings">
+    <section>
+      <h2>模型库 <button id="btn-add-model" class="small">＋ 添加</button></h2>
+      <p class="hint">key 只存在你浏览器的 localStorage 里，直接从浏览器请求各家接口。</p>
+      <ul id="model-list" class="model-list"></ul>
+    </section>
+
+    <section>
+      <h2>这一局</h2>
+      <div class="row">
+        <label>人数 <select id="player-count"></select></label>
+        <label class="toggle"><input type="checkbox" id="human-seat"> 我也上桌</label>
+      </div>
+      <div class="comp" id="composition"></div>
+      <div class="row">
+        <label>模型分配 <select id="assign-mode">
+          <option value="random">随机分给所有勾选的模型</option>
+          <option value="manual">按座位手动指定</option>
+        </select></label>
+      </div>
+      <div id="seat-assign" class="seat-assign" hidden></div>
+      <details>
+        <summary>规则细节</summary>
+        <label class="toggle"><input type="checkbox" id="opt-selfsave"> 女巫可以自救</label>
+        <label class="toggle"><input type="checkbox" id="opt-lastwords" checked> 首夜死者有遗言</label>
+        <label class="toggle"><input type="checkbox" id="opt-freetalk" checked> 轮流发言后有自由讨论</label>
+        <label>胜负 <select id="opt-winmode">
+          <option value="side">屠边（神或民死光狼胜）</option>
+          <option value="all">屠城（狼不少于好人时狼胜）</option>
+        </select></label>
+        <label>狼人夜间商量轮数 <select id="opt-wolfrounds"><option value="1">1</option><option value="2">2</option><option value="0">不商量</option></select></label>
+      </details>
+      <button id="btn-demo" class="ghost">🧪 用假模型试跑一局（不花钱）</button>
+    </section>
+
+    <section class="about">
+      <h2>这个版本和别的 AI 狼人杀有什么不同</h2>
+      <ul class="hint">
+        <li>每个 AI 是一段持续的对话：发生的事一条条追加给它，它说过的话就是它的记忆。不会每轮重读整局卷宗。</li>
+        <li>系统提示只讲规则、身份和一句性格，不教怎么打，不给发言模板。</li>
+        <li>有自由讨论环节，可以插话、回应、也可以不说。</li>
+        <li>投票和夜间行动前它会先对自己说一句理由，上帝视角能看到。</li>
+      </ul>
+    </section>
+  </aside>
+
+  <section class="stage">
+    <div class="table" id="table">
+      <div class="table-center" id="table-center">
+        <div class="phase-icon" id="phase-icon">🌙</div>
+        <div class="phase-text" id="phase-text">等待开局</div>
+      </div>
+    </div>
+    <div class="human-bar" id="human-bar" hidden>
+      <div class="human-task" id="human-task"></div>
+      <div class="human-options" id="human-options"></div>
+      <div class="human-input">
+        <textarea id="human-text" rows="2" placeholder="说点什么…"></textarea>
+        <button id="human-send" class="primary">发送</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="logpane">
+    <div class="log-tabs">
+      <button class="tab active" data-tab="log">对局记录</button>
+      <button class="tab" data-tab="mind">AI 的心里话</button>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="mind" id="mind" hidden>
+      <p class="hint">点桌上的某个座位，看它的完整对话：它收到了什么、心里想了什么、说了什么。只在上帝视角下可用。</p>
+      <div id="mind-content"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="model-dialog">
+  <form method="dialog" id="model-form">
+    <h3 id="model-dialog-title">添加模型</h3>
+    <label>快速选择
+      <select id="mf-preset"><option value="">— 自定义 —</option></select>
+    </label>
+    <label>显示名 <input id="mf-label" placeholder="例如 GPT-4o" required></label>
+    <label>接口类型
+      <select id="mf-type">
+        <option value="openai">OpenAI 兼容（OpenAI / DeepSeek / Qwen / Kimi / Grok / OpenRouter / 中转）</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="gemini">Google Gemini</option>
+      </select>
+    </label>
+    <label>Base URL <input id="mf-url" placeholder="https://api.openai.com/v1"></label>
+    <label>模型名 <input id="mf-model" placeholder="gpt-4o" required></label>
+    <label>API Key <input id="mf-key" type="password" autocomplete="off"></label>
+    <div class="dialog-actions">
+      <button type="button" id="mf-test" class="ghost">测试连接</button>
+      <span id="mf-test-result" class="hint"></span>
+      <span class="spacer"></span>
+      <button type="button" id="mf-cancel">取消</button>
+      <button type="submit" class="primary">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

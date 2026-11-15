@@ -1,0 +1,11 @@
+{
+  "name": "ai-werewolf-table",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "一桌 AI 自己打狼人杀：每个 AI 是一个有记忆、有性格的参与者，而不是读卷宗的旁观者。",
+  "scripts": {
+    "test": "node test/parse.mjs && node test/run-mock-game.mjs && node test/info-boundary.mjs",
+    "serve": "python3 -m http.server 8080"
+  }
+}
