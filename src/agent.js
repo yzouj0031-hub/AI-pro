@@ -131,7 +131,13 @@ export function parseDecision(text, keyword, options, { allowNone = true } = {})
       if (allowNone && /^(无|不|没|空|弃|none|skip|不开|不用|不守|空刀|弃票|不用药)/i.test(m[1].trim())) return { none: true };
     }
   }
-  // 2. 最后一行里有唯一的座位号或名字
+  // 2. "投票给3号" / "我杀2号" 这类没有冒号的写法
+  const looseRe = new RegExp(`${escapeRe(keyword)}\\s*(?:给|了|是|选)?\\s*[:：]?\\s*([^，。,.!！\\n]{1,12})`);
+  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 3); i--) {
+    const m = looseRe.exec(lines[i]);
+    if (m) { const r = matchTarget(m[1], options, true); if (r) return r; }
+  }
+  // 3. 最后一行里有唯一的座位号或名字
   for (let i = lines.length - 1; i >= Math.max(0, lines.length - 2); i--) {
     const r = matchTarget(lines[i], options, true);
     if (r) return r;

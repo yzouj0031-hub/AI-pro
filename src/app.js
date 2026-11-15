@@ -161,7 +161,7 @@ function buildPlayers() {
   for (let s = 1; s <= n; s++) {
     const persona = personas[s - 1];
     if (s === humanSeat) {
-      players.push({ seat: s, name: '你', role: roles[s - 1], persona: { name: '你', bio: '真人玩家。' }, modelLabel: '真人', agent: new HumanAgent({ onAsk: humanAsk }), human: true });
+      players.push({ seat: s, name: persona.name, role: roles[s - 1], persona: { name: persona.name, bio: '真人玩家。' }, modelLabel: '真人（你）', agent: new HumanAgent({ onAsk: humanAsk }), human: true });
       continue;
     }
     let m = null;
@@ -310,7 +310,7 @@ function renderSeats() {
     el.style.left = `${50 + 42 * Math.cos(ang)}%`;
     el.style.top = `${50 + 42 * Math.sin(ang)}%`;
     const r = ROLES[p.role];
-    const showRole = settings.god || p.human || !p.alive && game?.phase === 'end';
+    const showRole = settings.god || p.human || (game && (game.phase === 'end' || game.phase === 'aborted')) || (!game && viewPlayers === replayPlayersView);
     el.innerHTML = `<div class="avatar">${p.human ? '🙂' : AVATARS[i % AVATARS.length]}</div><div class="name"><small>${p.seat}号</small>${esc(p.name)}</div><div class="model">${esc(p.modelLabel || '')}</div>${showRole && r ? `<div class="role ${r.team}">${r.icon} ${r.name}</div>` : ''}`;
     el.title = p.persona?.bio || p.persona || '';
     el.onclick = () => { selectedSeat = p.seat; renderSeats(); showTab('mind'); renderMind(p.seat); };
@@ -388,12 +388,13 @@ $('human-text').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.pre
 
 // ===== 回放 =====
 let replayPlayers = [];
+let replayPlayersView = null;
 async function replay(data) {
   if (game && game.phase !== 'end' && game.phase !== 'aborted') { if (!confirm('当前有对局在进行，终止并回放？')) return; game.abort(); stepResolve(); }
   game = null;
   $('log').innerHTML = ''; $('mind-content').innerHTML = '';
   replayPlayers = data.players || [];
-  viewPlayers = replayPlayers.map(p => ({ ...p, alive: true }));
+  viewPlayers = replayPlayersView = replayPlayers.map(p => ({ ...p, alive: true }));
   renderSeats();
   $('status').textContent = '回放中';
   setControls(false);
